@@ -1,1 +1,1 @@
-# Opera-es-banc-rias-distribu-das
+# Operações bancárias distribuidas
