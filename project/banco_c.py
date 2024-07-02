@@ -7,14 +7,15 @@ import logging
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-nome_banco = os.getenv('NOME_BANCO', 'banco_b')
+nome_banco = os.getenv('NOME_BANCO', 'banco_c')
 app = Flask(nome_banco)
 banco = Banco(nome_banco)
 app.secret_key = 'secret_key'  # Chave secreta para assinatura da sessão
 endereco_ip = socket.gethostbyname(socket.gethostname())
+ip_b = os.getenv('ipb', endereco_ip)
 ip_a = os.getenv('ipa', endereco_ip)
-ip_c = os.getenv('ipc', endereco_ip)
-bancos = {'banco_a': f"http://{ip_a}:1234", 'banco_c': f"http://{ip_c}:4567"}
+
+bancos = {'banco_b': f"http://{ip_b}:4321", 'banco_a': f"http://{ip_a}:1234"}
 
 @app.route('/criar-conta-fisica', methods=['POST'])
 def criar_contaFisica():
@@ -163,6 +164,7 @@ def rollback():
             return jsonify({"rollback": rollback}),500
     except Exception as e:
         return jsonify({"mensagem": f"Erro ao reverter transferência: {str(e)}"}), 500
+
 
 @app.route('/transferencia', methods=['POST'])
 def transferencia_mult():
@@ -555,7 +557,7 @@ def exibir_contas_cpf():
     
 @app.route('/status', methods=['GET'])
 def status():
-    return jsonify({"status": "online"}),200    
+    return jsonify({"status": "online"}),200
 
 def criar_conta_inicial():
     conta1 = banco.criar_contaPF('123', 1000, '123', '123')
@@ -574,6 +576,6 @@ def verificar_status_banco(url):
 
 if __name__ == '__main__':
     criar_conta_inicial()
-    port = int(os.getenv('portApi', 4321))
+    port = int(os.getenv('portApi', 4567))
     f"http://{endereco_ip}:{port}"
     app.run(debug=True, host=endereco_ip, port=port)

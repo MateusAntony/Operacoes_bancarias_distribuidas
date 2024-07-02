@@ -1,65 +1,129 @@
 from contaFisica import ContaFisica
 from contaPJ import ContaPJ
 from contaConjunta import ContaConjunta
+from threading import Lock 
+import time
+import logging
 
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 class Banco:
     def __init__(self, nome):
         self.nome= nome
         self.contas={}
-    
+        self.lock= Lock()
+        self.locks={}
+        self.transacoes_preparadas={}
+
     def criar_contaPF(self,numero,saldo,senha,cpf):
-        if cpf in self.contas:
-            print("Cliente já existe nesse banco")
-            return False
-        else:
+        with self.lock:
+            if cpf in self.contas and self.contas[cpf]['numero'] == numero:
+                print("Cliente já existe nesse banco")
+                return False
             conta=ContaFisica(numero,saldo,senha,cpf)
-            self.contas[conta.cpf] = {'numero': conta.numero, 'saldo': conta.saldo, 'senha': conta.senha, 'cpf': conta.cpf}
+            self.contas[conta.numero] = {'numero': conta.numero, 'saldo': conta.saldo, 'senha': conta.senha, 'cpf': conta.cpf}
             return conta
 
     
     def criar_contaPJ(self,numero,saldo,senha,cnpj):
-        if cnpj in self.contas:
-            print("Cliente já existe nesse banco")
-            return False
-        else:
-            conta=ContaPJ(numero,saldo,senha,cnpj)
-            self.contas[conta.cnpj] = {'numero': conta.numero, 'saldo': conta.saldo, 'senha': conta.senha,'cpf': conta.cnpj}
-            return conta
+        with self.lock:
+            if cnpj in self.contas and self.contas[cnpj]['numero'] == numero:
+                print("Cliente já existe nesse banco")
+                return False
+            else:
+                conta=ContaPJ(numero,saldo,senha,cnpj)
+                self.contas[conta.numero] = {'numero': conta.numero, 'saldo': conta.saldo, 'senha': conta.senha,'cpf': conta.cnpj}
+                return conta
         
     def criar_contaConjunta(self,numero,saldo,senha,cpf1,cpf2):
-        if cpf1 in self.contas or cpf2 in self.contas:
-            print("Cliente já tem uma conta nesse banco")
-        else:
-            conta=ContaConjunta(numero,saldo,senha,cpf1,cpf2)
-            self.contas[conta.cpf1] = {'numero': conta.numero, 'saldo': conta.saldo, 'senha': conta.senha,'cpf1': conta.cpf1}
-            self.contas[conta.cpf2] = {'numero': conta.numero, 'saldo': conta.saldo, 'senha': conta.senha,'cpf2': conta.cpf2}
-            return conta
+        with self.lock:
+            if (cpf1 in self.contas and self.contas[cpf1]['numero'] == numero) or (cpf2 in self.contas and self.contas[cpf2]['numero'] == numero):
+                print("Cliente já tem uma conta nesse banco")
+                return False
+            else:
+                conta=ContaConjunta(numero,saldo,senha,cpf1,cpf2)
+                self.contas[conta.numero] = {'numero': conta.numero, 'saldo': conta.saldo, 'senha': conta.senha,'cpf1': conta.cpf1,'cpf2': conta.cpf2}
+                return conta
 
-    def get_conta(self,cpf_ou_cnpj):
-        if self.contas.get(cpf_ou_cnpj) :
-            return self.contas.get(cpf_ou_cnpj)
-        return False
-        
-    def verificar_credenciais(self, cpf_ou_cnpj, senha):
-        conta = self.contas.get(cpf_ou_cnpj)
-        if conta and conta['senha'] == senha:
-            return True
-        return False
-    
-    def retirada(self,cpf_ou_cnpj,valor):
-        conta = self.contas.get(cpf_ou_cnpj)
-        if conta['saldo'] >= valor:
-            conta['saldo'] -= valor
-            return True
-        else:
+    def get_conta(self,cpf_ou_cnpj,numero):
+        with self.lock:
+            conta = self.contas.get(numero)
+            if conta:
+                return conta
             return False
     
-    def add(self,cpf_ou_cnpj,valor):
-        conta = self.contas.get(cpf_ou_cnpj)
-        if conta:
+    def get_conta_por_cpf(self, cpf_ou_cnpj):
+        with self.lock:
+            contas_encontradas = []
+            for numero, conta_info in self.contas.items():
+                if conta_info.get('cpf') == cpf_ou_cnpj or conta_info.get('cnpj') == cpf_ou_cnpj or  conta_info.get('cpf1') == cpf_ou_cnpj or conta_info.get('cpf2') == cpf_ou_cnpj:
+                    contas_encontradas.append(conta_info)
+            return contas_encontradas if contas_encontradas else None
+        
+    def verificar_credenciais(self, cpf_ou_cnpj, senha,numero):
+        with self.lock:
+            conta = self.contas.get(numero)
+            if conta and conta['senha'] == senha:
+                return True
+            return False
+    
+    def retirada(self,cpf_ou_cnpj,numero,valor):
+        with self.lock:
+            conta = self.contas.get(numero)
+            if conta['saldo'] >= valor:
+                    conta['saldo'] -= valor
+                    return True
+            return False
+    
+    def add(self,cpf_ou_cnpj,numero,valor):
+        with self.lock:
+            conta = self.contas.get(numero)
             conta['saldo'] += valor
             return True
-        return False
+    
+    def lock_conta(self,numero):
+        if numero not in self.locks:
+            self.locks[numero]= Lock()
+        self.locks[numero].acquire()
+    
+    def unlock_conta(self,numero):
+        if numero in self.locks:
+            self.locks[numero].release()
+        
+    def preparar(self,cpf,numero,valor):
+        self.lock_conta(numero)
+        try:
+            time.sleep(1)
+            if self.retirada(cpf,numero,valor):
+                self.transacoes_preparadas[(cpf,numero)] = valor
+                logger.debug(f"Transação preparada: {(cpf, numero)} com valor {valor}")
+                return True
+            return False
+        finally:
+            self.unlock_conta(numero)
+    
+    def confirmar(self,numero,cpf):
+        self.lock_conta(numero)
+        logger.debug(f"Confirmando transação: {(cpf, numero)}")
+        logger.debug(f"Transações preparadas: {self.transacoes_preparadas}")
+        try:
+            if (cpf,numero) in self.transacoes_preparadas:
+                valor= self.transacoes_preparadas.pop((cpf,numero))    
+                return True
+            return False
+        finally:
+            self.unlock_conta(numero)
+
+    def rollback(self,numero,cpf):
+        self.lock_conta(numero)
+        try:
+            if (cpf,numero) in self.transacoes_preparadas:
+                valor= self.transacoes_preparadas.pop((cpf,numero))
+                self.add(cpf,numero,valor)
+                return True
+            return False
+        finally:
+            self.unlock_conta(numero)
 
 

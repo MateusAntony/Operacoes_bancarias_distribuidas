@@ -3,14 +3,19 @@ from flask import Flask, request, jsonify, session
 import requests
 import os
 import socket
+import logging
 
-nome_banco = os.getenv('NOME_BANCO', 'Banco Default')
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+nome_banco = os.getenv('NOME_BANCO', 'banco_a')
 app = Flask(nome_banco)
 banco = Banco(nome_banco)
 app.secret_key = 'secret_key'  # Chave secreta para assinatura da sessão
 endereco_ip = socket.gethostbyname(socket.gethostname())
+ip_b = os.getenv('ipb', endereco_ip)
+ip_c = os.getenv('ipc', endereco_ip)
 
-bancos = {'banco_B': f"http://{endereco_ip}:4321"}
+bancos = {'banco_b': f"http://{ip_b}:4321",'banco_c': f"http://{ip_c}:4567"}
 
 @app.route('/criar-conta-fisica', methods=['POST'])
 def criar_contaFisica():
@@ -22,7 +27,7 @@ def criar_contaFisica():
     try:
         conta = banco.criar_contaPF(numero, saldo, senha, cpf)
         if conta == False:
-            return jsonify({'mensagem': 'Cliente já existe no cadastro do banco'})
+            return jsonify({'mensagem': 'Cliente já existe no cadastro do banco'}),400
         return jsonify({'numero': conta.numero, 'saldo': conta.saldo, 'cpf': conta.cpf, 'mensagem': 'Conta criada com sucesso'}), 200
     except:
         return jsonify({"mensagem": "Erro ao criar conta"}), 400
@@ -37,7 +42,7 @@ def criar_contaPJ():
     try:
         conta = banco.criar_contaPJ(numero, saldo, senha, cnpj)
         if conta == False:
-            return jsonify({'mensagem': 'Cliente já existe no cadastro do banco'})
+            return jsonify({'mensagem': 'Cliente já existe no cadastro do banco'}), 400
         return jsonify({'numero': conta.numero, 'saldo': conta.saldo, 'cnpj': conta.cnpj, 'mensagem': 'Conta criada com sucesso'}), 200
     except:
         return jsonify({"mensagem": "Erro ao criar conta"}), 400
@@ -53,28 +58,40 @@ def criar_contaConjunta():
     try:
         conta = banco.criar_contaConjunta(numero, saldo, senha, cpf1, cpf2)
         if conta == False:
-            return jsonify({'mensagem': 'Um dos clientes já possui conta'})
+            return jsonify({'mensagem': 'Um dos clientes já possui conta'}),400
         return jsonify({'numero': conta.numero, 'saldo': conta.saldo, 'cpf1': conta.cpf1, 'cpf2': conta.cpf2, 'mensagem': 'Conta criada com sucesso'}), 200
     except:
-        return jsonify({'mensagem': 'Erro ao criar conta'}), 200
+        return jsonify({'mensagem': 'Erro ao criar conta'}), 400
 
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json
     cpf = data.get('cpf')
     senha = data.get('senha')
-    if banco.verificar_credenciais(cpf, senha) == True:
+    numero = data.get('numero')
+    if banco.verificar_credenciais(cpf, senha, numero):
         session['logged_in'] = True
         session['cpf'] = cpf
+        session['numero'] = numero
         return jsonify({"mensagem": "Login realizado com sucesso"}), 200
-    return jsonify({"mensagem": "Cpf ou senha inválidos"}), 401
+    return jsonify({"mensagem": "Cpf, senha ou número da conta inválidos"}), 401
 
 @app.route('/exibir-conta', methods=['GET'])
-def exibir_conta():
-    cpf = session.get('cpf')  # Obtém o CPF do usuário logado da sessão
-    conta = banco.get_conta(cpf)  # Obtém os detalhes da conta do banco
+def exibir_conta_do_login():
+    cpf = session.get('cpf')  
+    numero = session.get('numero') # Obtém o CPF do usuário logado da sessão
+    conta = banco.get_conta(cpf,numero)  # Obtém os detalhes da conta do banco
     if conta:
         return jsonify(conta), 200
+    else:
+        return jsonify({"mensagem": "Conta não encontrada"}), 404
+    
+@app.route('/exibir-contas-banco', methods=['GET'])
+def exibir_conta_do_banco():
+    cpf = request.args.get('cpf')
+    contas = banco.get_conta_por_cpf(cpf)
+    if contas:
+        return jsonify(contas), 200
     else:
         return jsonify({"mensagem": "Conta não encontrada"}), 404
 
@@ -82,10 +99,11 @@ def exibir_conta():
 def add_saldo():
     data = request.json
     cpf = data.get('cpf')
+    numero = data.get('numero')
     valor = float(data.get('valor'))
-    conta = banco.get_conta(cpf)  # Obtém os detalhes da conta do banco
+    conta = banco.get_conta(cpf,numero)  # Obtém os detalhes da conta do banco
     if conta:
-        conta = banco.add(cpf, valor)
+        conta = banco.add(cpf,numero,valor)
         return jsonify({"mensagem": "Valor adicionado na conta"}), 200    
     else:
         return jsonify({"mensagem": "Conta não encontrada"}), 404
@@ -94,89 +112,468 @@ def add_saldo():
 def retirada():
     data = request.json
     cpf = data.get('cpf')
+    numero = data.get('numero')
     valor = float(data.get('valor'))
-    conta = banco.get_conta(cpf)  # Obtém os detalhes da conta do banco
+    conta = banco.get_conta(cpf,numero)  # Obtém os detalhes da conta do banco
     if conta:
-        conta = banco.retirada(cpf, valor)
+        conta = banco.retirada(cpf,numero, valor)
         return jsonify({"mensagem": "Valor retirado da conta"}), 200
     else:
         return jsonify({"mensagem": "Conta não encontrada"}), 404
 
+@app.route('/preparar', methods=['POST'])
+def preparar():
+    data = request.json
+    cpf = data.get('cpf')
+    numero = data.get('numero')
+    valor = float(data.get('valor'))
+    try:
+        preparado = banco.preparar(cpf, numero, valor)
+        if preparado:
+            return jsonify({"preparado": preparado}), 200
+        else:
+            return jsonify({"preparado": preparado}), 500  
+    except Exception as e:
+        return jsonify({"mensagem": f"Erro ao preparar transferência: {str(e)}"}), 500
+
+@app.route('/confirmar', methods=['POST'])
+def confirmar():
+    data = request.json
+    numero = data.get('numero')
+    cpf = data.get('cpf')
+    try:
+        confirmado = banco.confirmar(numero, cpf)
+        if confirmado:
+            return jsonify({"confirmado": confirmado}), 200 
+        else:
+            return jsonify({"confirmado": confirmado}), 500             
+    except Exception as e:
+        return jsonify({"mensagem": f"Erro ao confirmar transferência: {str(e)}"}), 500
+
+
+@app.route('/rollback', methods=['POST'])
+def rollback():
+    data = request.json
+    numero = data.get('numero')
+    cpf = data.get('cpf')
+    try:
+        rollback = banco.rollback(numero, cpf)
+        if rollback:
+            return jsonify({"rollback": rollback}), 200 
+        else: 
+            return jsonify({"rollback": rollback}),500
+    except Exception as e:
+        return jsonify({"mensagem": f"Erro ao reverter transferência: {str(e)}"}), 500
+
 @app.route('/transferencia', methods=['POST'])
-def transferencia():
+def transferencia_mult():
     if session.get('logged_in'):
         data = request.json
-        cpf_origem = session.get('cpf')
+        contas_origem = data.get('contas_origem')  # Lista de contas de origem, cada conta é um dicionário com 'cpf', 'numero', 'valor', 'nome_banco'
         cpf_destino = data.get('cpf_destino')
-        valor = float(data.get('valor'))
+        numero_destino = data.get('numero_destino')
         nome_banco_destino = data.get('nome_banco_destino')
+        valor_total = sum([float(conta['valor']) for conta in contas_origem])
 
-        if nome_banco_destino == nome_banco:
-            # Transferência dentro do mesmo banco
-            try:
-                conta_origem = banco.get_conta(cpf_origem)
-                conta_destino = banco.get_conta(cpf_destino)
-                if conta_origem and conta_destino:
-                    banco.retirada(cpf_origem, valor)
-                    banco.add(cpf_destino,valor)
-                    return jsonify({"mensagem": f"Transferência de R${valor:.2f} realizada com sucesso"}), 200
-                else:
-                    return jsonify({"mensagem": "Conta de origem ou conta de destino não encontrada"}), 404
-            except Exception as e:
-                return jsonify({"mensagem": f"Erro ao realizar transferência: {str(e)}"}), 500
-        else:
-            # Transferência para outro banco
-            if nome_banco_destino in bancos:
-                try:
-                    banco.retirada(cpf_origem, valor)
-                    url_banco_destino = bancos[nome_banco_destino]
-                    payload = {
-                        "cpf": cpf_destino,
-                        "valor": valor  
-                    }
-                    response = requests.post(f"{url_banco_destino}/add", json=payload)
-                    if response.status_code == 200:
-                        response_data = response.json()
-                        if response_data.get('mensagem') == "Valor adicionado na conta":
-                            return jsonify({"mensagem": f"Transferência de R${valor:.2f} para {nome_banco_destino} realizada com sucesso"}), 200
-                        else:
-                            return jsonify({"mensagem": f"Falha ao transferir para {nome_banco_destino}: {response_data.get('mensagem')}"}), 500
+        transacoes_preparadas = []
+
+        if nome_banco_destino in bancos:
+            url_banco_origem = bancos[nome_banco_destino]
+            if verificar_status_banco(url_banco_origem) == False:
+                return jsonify({f"mensagem": "Banco destino temporariamente indisponível"}), 503
+
+        for conta in contas_origem:
+            nome_banco_origem = conta['nome_banco']
+            if nome_banco_origem in bancos:
+                url_banco_origem = bancos[nome_banco_origem]
+                if verificar_status_banco(url_banco_origem) == False:
+                    return jsonify({f"mensagem": "Um dos Bancos temporariamente indisponível"}), 503
+
+        try:
+            # Preparar retiradas
+            for conta in contas_origem:
+                nome_banco_origem = conta['nome_banco']
+                cpf_origem = conta['cpf']
+                numero_origem = conta['numero']
+                valor = float(conta['valor'])
+
+                logger.debug(f"Preparando retirada para conta: {conta}")
+
+                if nome_banco_origem == nome_banco:  # Mesma instituição
+                    if banco.preparar(cpf_origem, numero_origem, valor):
+                        transacoes_preparadas.append((cpf_origem, numero_origem, valor))
+                        logger.debug(f"Retirada preparada para conta local: {conta}")
                     else:
-                        return jsonify({"mensagem": f"Falha ao transferir para {nome_banco_destino}: {response.json().get('mensagem')}"}), response.status_code
-                except Exception as e:
-                    return jsonify({"mensagem": f"Erro ao transferir para {nome_banco_destino}: {str(e)}"}), 500
-            else:
-                return jsonify({"mensagem": f"Banco destino {nome_banco_destino} não reconhecido"}), 404
+                        raise Exception("Falha ao preparar retirada")
+
+                elif nome_banco_origem in bancos:  # Outra instituição
+                    url_banco_origem = bancos[nome_banco_origem]
+                    payload_preparar_origem = {
+                        "cpf": cpf_origem,
+                        "numero": numero_origem,
+                        "valor": valor
+                    }
+                    response_preparar = requests.post(f"{url_banco_origem}/preparar", json=payload_preparar_origem)
+                    logger.debug(f"Resposta da preparação no banco origem {nome_banco_origem}: {response_preparar.json()}")
+                    if response_preparar.status_code == 200 and response_preparar.json().get('preparado'):
+                        transacoes_preparadas.append((cpf_origem, numero_origem, valor))
+                        logger.debug(f"Retirada preparada para conta externa: {conta}")
+                    else:
+                        raise Exception("Falha ao preparar retirada em banco origem")
+
+            # Confirmar retiradas
+            for cpf_origem, numero_origem, valor in transacoes_preparadas:
+                nome_banco_origem = next((conta['nome_banco'] for conta in contas_origem if conta['cpf'] == cpf_origem and conta['numero'] == numero_origem), None)
+                logger.debug(f"Confirmando retirada para conta: {cpf_origem}, {numero_origem}")
+
+                if nome_banco_origem == nome_banco:
+                    if not banco.confirmar(numero_origem, cpf_origem):
+                        raise Exception("Falha ao confirmar retirada")
+                    logger.debug(f"Retirada confirmada para conta local: {cpf_origem}, {numero_origem}")
+
+                elif nome_banco_origem in bancos:
+                    url_banco_origem = bancos[nome_banco_origem]
+                    payload_confirmar_origem = {
+                        "cpf": cpf_origem,
+                        "numero": numero_origem
+                    }
+                    response_confirmar = requests.post(f"{url_banco_origem}/confirmar", json=payload_confirmar_origem)
+                    logger.debug(f"Resposta da confirmação no banco origem {nome_banco_origem}: {response_confirmar.json()}")
+                    if response_confirmar.status_code != 200:
+                        raise Exception("Falha ao confirmar retirada em banco origem")
+                    logger.debug(f"Retirada confirmada para conta externa: {cpf_origem}, {numero_origem}")
+
+            # Adicionar valor no destino
+            if nome_banco_destino == nome_banco:
+                banco.add(cpf_destino, numero_destino, valor_total)
+                logger.debug(f"Valor adicionado na conta destino local: {cpf_destino}, {numero_destino}, valor: {valor_total}")
+            elif nome_banco_destino in bancos:
+                url_banco_destino = bancos[nome_banco_destino]
+                payload_destino = {
+                    "cpf": cpf_destino,
+                    "numero": numero_destino,
+                    "valor": valor_total
+                }
+                response_destino = requests.post(f"{url_banco_destino}/add", json=payload_destino)
+                logger.debug(f"Resposta da adição de valor no banco destino {nome_banco_destino}: {response_destino.json()}")
+                if response_destino.status_code != 200:
+                    raise Exception("Falha ao adicionar valor no banco destino")
+                logger.debug(f"Valor adicionado na conta destino externa: {cpf_destino}, {numero_destino}, valor: {valor_total}")
+
+            return jsonify({"mensagem": f"Transferência de R${valor_total:.2f} realizada com sucesso"}), 200
+
+        except Exception as e:
+            # Rollback em caso de erro
+            logger.error(f"Erro na transferência: {str(e)}")
+            for cpf_origem, numero_origem, valor in transacoes_preparadas:
+                nome_banco_origem = next((conta['nome_banco'] for conta in contas_origem if conta['cpf'] == cpf_origem and conta['numero'] == numero_origem), None)
+                if nome_banco_origem == nome_banco:
+                    banco.rollback(cpf_origem, numero_origem)
+                    logger.debug(f"Rollback realizado para conta local: {cpf_origem}, {numero_origem}")
+                elif nome_banco_origem in bancos:
+                    url_banco_origem = bancos[nome_banco_origem]
+                    payload_rollback = {
+                        "cpf": cpf_origem,
+                        "numero": numero_origem
+                    }
+                    requests.post(f"{url_banco_origem}/rollback", json=payload_rollback)
+                    logger.debug(f"Rollback solicitado para conta externa: {cpf_origem}, {numero_origem}")
+
+            return jsonify({"mensagem": f"Erro ao realizar transferência: {str(e)}"}), 500
+    else:
+        return jsonify({"mensagem": "Usuário não está logado"}), 401
+    
+
+@app.route('/pagamento', methods=['POST'])
+def pagamento():
+    if session.get('logged_in'):
+        data = request.json
+        contas_origem = data.get('contas_origem')  # Lista de contas de origem, cada conta é um dicionário com 'cpf', 'numero', 'valor', 'nome_banco'
+        cpf_destino = data.get('cpf_destino')
+        numero_destino = data.get('numero_destino')
+        nome_banco_destino = data.get('nome_banco_destino')
+        valor_total = sum([float(conta['valor']) for conta in contas_origem])
+
+        transacoes_preparadas = []
+
+        if nome_banco_destino in bancos:
+            url_banco_origem = bancos[nome_banco_destino]
+            if verificar_status_banco(url_banco_origem) == False:
+                return jsonify({f"mensagem": "Banco destino temporariamente indisponível"}), 503
+
+        for conta in contas_origem:
+            nome_banco_origem = conta['nome_banco']
+            if nome_banco_origem in bancos:
+                url_banco_origem = bancos[nome_banco_origem]
+                if verificar_status_banco(url_banco_origem) == False:
+                    return jsonify({f"mensagem": "Um dos Bancos temporariamente indisponível"}), 503
+
+        try:
+            # Preparar retiradas
+            for conta in contas_origem:
+                nome_banco_origem = conta['nome_banco']
+                cpf_origem = conta['cpf']
+                numero_origem = conta['numero']
+                valor = float(conta['valor'])
+
+                logger.debug(f"Preparando retirada para conta: {conta}")
+
+                if nome_banco_origem == nome_banco:  # Mesma instituição
+                    if banco.preparar(cpf_origem, numero_origem, valor):
+                        transacoes_preparadas.append((cpf_origem, numero_origem, valor))
+                        logger.debug(f"Retirada preparada para conta local: {conta}")
+                    else:
+                        raise Exception("Falha ao preparar retirada")
+
+                elif nome_banco_origem in bancos:  # Outra instituição
+                    url_banco_origem = bancos[nome_banco_origem]
+                    payload_preparar_origem = {
+                        "cpf": cpf_origem,
+                        "numero": numero_origem,
+                        "valor": valor
+                    }
+                    response_preparar = requests.post(f"{url_banco_origem}/preparar", json=payload_preparar_origem)
+                    logger.debug(f"Resposta da preparação no banco origem {nome_banco_origem}: {response_preparar.json()}")
+                    if response_preparar.status_code == 200 and response_preparar.json().get('preparado'):
+                        transacoes_preparadas.append((cpf_origem, numero_origem, valor))
+                        logger.debug(f"Retirada preparada para conta externa: {conta}")
+                    else:
+                        raise Exception("Falha ao preparar retirada em banco origem")
+
+            # Confirmar retiradas
+            for cpf_origem, numero_origem, valor in transacoes_preparadas:
+                nome_banco_origem = next((conta['nome_banco'] for conta in contas_origem if conta['cpf'] == cpf_origem and conta['numero'] == numero_origem), None)
+                logger.debug(f"Confirmando retirada para conta: {cpf_origem}, {numero_origem}")
+
+                if nome_banco_origem == nome_banco:
+                    if not banco.confirmar(numero_origem, cpf_origem):
+                        raise Exception("Falha ao confirmar retirada")
+                    logger.debug(f"Retirada confirmada para conta local: {cpf_origem}, {numero_origem}")
+
+                elif nome_banco_origem in bancos:
+                    url_banco_origem = bancos[nome_banco_origem]
+                    payload_confirmar_origem = {
+                        "cpf": cpf_origem,
+                        "numero": numero_origem
+                    }
+                    response_confirmar = requests.post(f"{url_banco_origem}/confirmar", json=payload_confirmar_origem)
+                    logger.debug(f"Resposta da confirmação no banco origem {nome_banco_origem}: {response_confirmar.json()}")
+                    if response_confirmar.status_code != 200:
+                        raise Exception("Falha ao confirmar retirada em banco origem")
+                    logger.debug(f"Retirada confirmada para conta externa: {cpf_origem}, {numero_origem}")
+
+            # Adicionar valor no destino
+            if nome_banco_destino == nome_banco:
+                banco.add(cpf_destino, numero_destino, valor_total)
+                logger.debug(f"Valor adicionado na conta destino local: {cpf_destino}, {numero_destino}, valor: {valor_total}")
+            elif nome_banco_destino in bancos:
+                url_banco_destino = bancos[nome_banco_destino]
+                payload_destino = {
+                    "cpf": cpf_destino,
+                    "numero": numero_destino,
+                    "valor": valor_total
+                }
+                response_destino = requests.post(f"{url_banco_destino}/add", json=payload_destino)
+                logger.debug(f"Resposta da adição de valor no banco destino {nome_banco_destino}: {response_destino.json()}")
+                if response_destino.status_code != 200:
+                    raise Exception("Falha ao adicionar valor no banco destino")
+                logger.debug(f"Valor adicionado na conta destino externa: {cpf_destino}, {numero_destino}, valor: {valor_total}")
+
+            return jsonify({"mensagem": f"Transferência de R${valor_total:.2f} realizada com sucesso"}), 200
+
+        except Exception as e:
+            # Rollback em caso de erro
+            logger.error(f"Erro na transferência: {str(e)}")
+            for cpf_origem, numero_origem, valor in transacoes_preparadas:
+                nome_banco_origem = next((conta['nome_banco'] for conta in contas_origem if conta['cpf'] == cpf_origem and conta['numero'] == numero_origem), None)
+                if nome_banco_origem == nome_banco:
+                    banco.rollback(cpf_origem, numero_origem)
+                    logger.debug(f"Rollback realizado para conta local: {cpf_origem}, {numero_origem}")
+                elif nome_banco_origem in bancos:
+                    url_banco_origem = bancos[nome_banco_origem]
+                    payload_rollback = {
+                        "cpf": cpf_origem,
+                        "numero": numero_origem
+                    }
+                    requests.post(f"{url_banco_origem}/rollback", json=payload_rollback)
+                    logger.debug(f"Rollback solicitado para conta externa: {cpf_origem}, {numero_origem}")
+
+            return jsonify({"mensagem": f"Erro ao realizar transferência: {str(e)}"}), 500
+    else:
+        return jsonify({"mensagem": "Usuário não está logado"}), 401
+
+    
+
+@app.route('/deposito', methods=['POST'])
+def deposito():
+    if session.get('logged_in'):
+        data = request.json
+        contas_origem = data.get('contas_origem')  # Lista de contas de origem, cada conta é um dicionário com 'cpf', 'numero', 'valor', 'nome_banco'
+        cpf_destino = data.get('cpf_destino')
+        numero_destino = data.get('numero_destino')
+        nome_banco_destino = data.get('nome_banco_destino')
+        valor_total = sum([float(conta['valor']) for conta in contas_origem])
+
+        transacoes_preparadas = []
+
+        if nome_banco_destino in bancos:
+            url_banco_origem = bancos[nome_banco_destino]
+            if verificar_status_banco(url_banco_origem) == False:
+                return jsonify({f"mensagem": "Banco destino temporariamente indisponível"}), 503
+
+        for conta in contas_origem:
+            nome_banco_origem = conta['nome_banco']
+            if nome_banco_origem in bancos:
+                url_banco_origem = bancos[nome_banco_origem]
+                if verificar_status_banco(url_banco_origem) == False:
+                    return jsonify({f"mensagem": "Um dos Bancos temporariamente indisponível"}), 503
+
+        try:
+            # Preparar retiradas
+            for conta in contas_origem:
+                nome_banco_origem = conta['nome_banco']
+                cpf_origem = conta['cpf']
+                numero_origem = conta['numero']
+                valor = float(conta['valor'])
+
+                logger.debug(f"Preparando retirada para conta: {conta}")
+
+                if nome_banco_origem == nome_banco:  # Mesma instituição
+                    if banco.preparar(cpf_origem, numero_origem, valor):
+                        transacoes_preparadas.append((cpf_origem, numero_origem, valor))
+                        logger.debug(f"Retirada preparada para conta local: {conta}")
+                    else:
+                        raise Exception("Falha ao preparar retirada")
+
+                elif nome_banco_origem in bancos:  # Outra instituição
+                    url_banco_origem = bancos[nome_banco_origem]
+                    payload_preparar_origem = {
+                        "cpf": cpf_origem,
+                        "numero": numero_origem,
+                        "valor": valor
+                    }
+                    response_preparar = requests.post(f"{url_banco_origem}/preparar", json=payload_preparar_origem)
+                    logger.debug(f"Resposta da preparação no banco origem {nome_banco_origem}: {response_preparar.json()}")
+                    if response_preparar.status_code == 200 and response_preparar.json().get('preparado'):
+                        transacoes_preparadas.append((cpf_origem, numero_origem, valor))
+                        logger.debug(f"Retirada preparada para conta externa: {conta}")
+                    else:
+                        raise Exception("Falha ao preparar retirada em banco origem")
+
+            # Confirmar retiradas
+            for cpf_origem, numero_origem, valor in transacoes_preparadas:
+                nome_banco_origem = next((conta['nome_banco'] for conta in contas_origem if conta['cpf'] == cpf_origem and conta['numero'] == numero_origem), None)
+                logger.debug(f"Confirmando retirada para conta: {cpf_origem}, {numero_origem}")
+
+                if nome_banco_origem == nome_banco:
+                    if not banco.confirmar(numero_origem, cpf_origem):
+                        raise Exception("Falha ao confirmar retirada")
+                    logger.debug(f"Retirada confirmada para conta local: {cpf_origem}, {numero_origem}")
+
+                elif nome_banco_origem in bancos:
+                    url_banco_origem = bancos[nome_banco_origem]
+                    payload_confirmar_origem = {
+                        "cpf": cpf_origem,
+                        "numero": numero_origem
+                    }
+                    response_confirmar = requests.post(f"{url_banco_origem}/confirmar", json=payload_confirmar_origem)
+                    logger.debug(f"Resposta da confirmação no banco origem {nome_banco_origem}: {response_confirmar.json()}")
+                    if response_confirmar.status_code != 200:
+                        raise Exception("Falha ao confirmar retirada em banco origem")
+                    logger.debug(f"Retirada confirmada para conta externa: {cpf_origem}, {numero_origem}")
+
+            # Adicionar valor no destino
+            if nome_banco_destino == nome_banco:
+                banco.add(cpf_destino, numero_destino, valor_total)
+                logger.debug(f"Valor adicionado na conta destino local: {cpf_destino}, {numero_destino}, valor: {valor_total}")
+            elif nome_banco_destino in bancos:
+                url_banco_destino = bancos[nome_banco_destino]
+                payload_destino = {
+                    "cpf": cpf_destino,
+                    "numero": numero_destino,
+                    "valor": valor_total
+                }
+                response_destino = requests.post(f"{url_banco_destino}/add", json=payload_destino)
+                logger.debug(f"Resposta da adição de valor no banco destino {nome_banco_destino}: {response_destino.json()}")
+                if response_destino.status_code != 200:
+                    raise Exception("Falha ao adicionar valor no banco destino")
+                logger.debug(f"Valor adicionado na conta destino externa: {cpf_destino}, {numero_destino}, valor: {valor_total}")
+
+            return jsonify({"mensagem": f"Transferência de R${valor_total:.2f} realizada com sucesso"}), 200
+
+        except Exception as e:
+            # Rollback em caso de erro
+            logger.error(f"Erro na transferência: {str(e)}")
+            for cpf_origem, numero_origem, valor in transacoes_preparadas:
+                nome_banco_origem = next((conta['nome_banco'] for conta in contas_origem if conta['cpf'] == cpf_origem and conta['numero'] == numero_origem), None)
+                if nome_banco_origem == nome_banco:
+                    banco.rollback(cpf_origem, numero_origem)
+                    logger.debug(f"Rollback realizado para conta local: {cpf_origem}, {numero_origem}")
+                elif nome_banco_origem in bancos:
+                    url_banco_origem = bancos[nome_banco_origem]
+                    payload_rollback = {
+                        "cpf": cpf_origem,
+                        "numero": numero_origem
+                    }
+                    requests.post(f"{url_banco_origem}/rollback", json=payload_rollback)
+                    logger.debug(f"Rollback solicitado para conta externa: {cpf_origem}, {numero_origem}")
+
+            return jsonify({"mensagem": f"Erro ao realizar transferência: {str(e)}"}), 500
+    else:
+        return jsonify({"mensagem": "Usuário não está logado"}), 401
 
 
 @app.route('/exibir-contas-cpf', methods=['GET'])
 def exibir_contas_cpf():
-    if session.get('logged_in'):
-        cpf = session.get('cpf')  
-        contas_encontradas = []
+    data = request.json
+    cpf = data.get('cpf')
+    contas_encontradas = []
+    # Obtém contas do banco local (banco próprio)
+    contas_locais = banco.get_conta_por_cpf(cpf)
+    if contas_locais:
+        for conta in contas_locais:
+                    conta['banco'] = nome_banco  # Adiciona o nome do banco
+                    contas_encontradas.append(conta)
+    
+    # Itera sobre bancos externos
+    for nome_banco_externo, url_banco in bancos.items():
+        try:
+            response = requests.get(f"{url_banco}/exibir-contas-banco", params={'cpf': cpf})
+            if response.status_code == 200:
+                contas_externas = response.json()
+                if isinstance(contas_externas, list):
+                    for conta in contas_externas:
+                            conta['banco'] = nome_banco_externo  # Adiciona o nome do banco
+                            contas_encontradas.append(conta)
+                else:
+                    print(f"Resposta inválida do banco {nome_banco_externo}: {contas_externas}")
+            else:
+                print(f"Erro ao recuperar contas do banco {nome_banco_externo}. Status code: {response.status_code}")
+        except Exception as e:
+            print(f"Erro ao recuperar contas do banco {nome_banco_externo}: {str(e)}")
 
-        conta_local = banco.get_conta(cpf)
-        if conta_local:
-            contas_encontradas.append({'saldo': conta_local['saldo'], 'banco': nome_banco})
-
-        for nome_banco_externo, url_banco in bancos.items():
-            try:
-                response = requests.get(f"{url_banco}/exibir-conta/{cpf}")
-                if response.status_code == 200:
-                    conta_info = response.json()
-                    if 'saldo' in conta_info:  
-                        contas_encontradas.append({'saldo': conta_info['saldo'], 'banco': nome_banco_externo})
-            except Exception as e:
-                print(f"Erro ao recuperar contas do banco {nome_banco_externo}: {str(e)}")
-
-        return jsonify(contas_encontradas), 200
+    return jsonify(contas_encontradas), 200
+   
+    
+@app.route('/status', methods=['GET'])
+def status():
+    return jsonify({"status": "online"}),200
 
 def criar_conta_inicial():
-    numero = '123'
-    saldo = 1000.0
-    senha = '123'
-    cpf = '123'
-    conta = banco.criar_contaPF(numero, saldo, senha, cpf)
+    conta1 = banco.criar_contaPF('123', 1000, '123', '123')
+    conta_conjunta = banco.criar_contaConjunta('1234',3000,'123','123','321')
+    conta2 = banco.criar_contaPF('12345', 200, '123', '987')
+
+def verificar_status_banco(url):
+    try:
+        response = requests.get(url + '/status')
+        if response.status_code == 200:
+            return True
+        else:
+            return False
+    except requests.exceptions.RequestException:
+        return False
+
 
 if __name__ == '__main__':
     criar_conta_inicial()
