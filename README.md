@@ -35,15 +35,15 @@ No desenvolvimento da solução foi utilizado o framework Flask para a crição 
 Foi elaborado uma Api para cada banco durante o desenvovimento do projeto, foi analisado uma maneira melhor de simplificar a codificação e a utilização do docker, por isso foi criado três arquivos de banco semelhantes com intuito de simplificar no momento de teste. Além disso o projeto possui um interface que executa no terminal para testar as funcionalidades.
 
 Como meio de simplificar a comunicação entre os bancos, foi elaborado a solução com cada banco conhecendo os demais bancos e suas urls, sendo assim, ao executar a imagem do docker passamos os endenreços de ip dos bancos. 
-<a id="gerenciamento-de-contas"></a>
 
+<a id="gerenciamento-de-contas"></a>
 ## 2.1. Gerenciamento de contas
 
 O sistema permite a criação de contas físicas, contas jurídicas e contas conjuntas. Vale ressaltar que só há possibilidade de criar uma conta por CPF cadastrado, exceto conta conjunta, ou seja, se você já tiver cadastrado uma conta com um determinado CPF e quiser criar outra com o mesmo CPF, só será possível criar uma conta conjunta.
 
 O sistema realiza transferência,deposito e pagamento de maneira correta, contendo a possibilidade de transferir para contas do mesmo banco e para contas de diferentes bancos. As transações são preparadas, confirmadas e em caso de erro são revertidas. Vale mencionar que as transações de pagamento e deposito são consideradas uma transferencias,  nesse sentido foi utilizado o mesmo endpoint para lidar com essas transações.
-<a id="Processo_de_transferência_entre_diferentes_contas"></a>
 
+<a id="Processo_de_transferência_entre_diferentes_contas"></a>
 ## 2.2. Processo de transferência entre diferentes contas
 
 O processo de tranferência a feito através da utilização do algoritmo 2-Phase Commit (2PC). Nesse sentido, inicialmente iremos preparar todas as contas que irão ter valores retirados, isso é feito analisando o tipo de banco que pertence a conta especificada, se for do próprio banco local solucionaremos chamando os métodos do algoritmo 2PC, contudo se for de bancos externo iremos comparar o nome do banco relacionado a conta ao listas de urls que tem no servidor do banco. Por fim, elaboramos o payload e fazemos a requisição para rota do banco que lida com cada fase do algoritmo 2PC. Logo abaixo está imagens de como funciona o loop de transferencia.
