@@ -40,7 +40,7 @@ Como meio de simplificar a comunicação entre os bancos, foi elaborado a soluç
 
 ## &nbsp;&nbsp; 2.1. Gerenciamento de contas
 
-O sistema permite a criação de contas físicas, contas jurídicas e contas conjuntas. Vale ressaltar que só há possibilidade de criar uma conta por CPF cadastrado, exceto conta conjunta. Ou seja, se você já tiver cadastrado uma conta com um determinado CPF e quiser criar outra com o mesmo CPF, só será possível criar uma conta conjunta.
+O sistema permite a criação de contas físicas, contas jurídicas e contas conjuntas. Vale ressaltar que só há possibilidade de criar uma conta por CPF cadastrado, exceto conta conjunta, ou seja, se você já tiver cadastrado uma conta com um determinado CPF e quiser criar outra com o mesmo CPF, só será possível criar uma conta conjunta.
 
 O sistema realiza transferência,deposito e pagamento de maneira correta, contendo a possibilidade de transferir para contas do mesmo banco e para contas de diferentes bancos. As transações são preparadas, confirmadas e em caso de erro são revertidas. Vale mencionar que as transações de pagamento e deposito são consideradas uma transferencias,  nesse sentido foi utilizado o mesmo endpoint para lidar com essas transações.
 </div>
