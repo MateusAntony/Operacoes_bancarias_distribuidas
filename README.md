@@ -34,7 +34,7 @@ No desenvolvimento da solução foi utilizado o framework Flask para a crição 
 
 Foi elaborado uma Api para cada banco durante o desenvovimento do projeto, foi analisado uma maneira melhor de simplificar a codificação e a utilização do docker, por isso foi criado três arquivos de banco semelhantes com intuito de simplificar no momento de teste. Além disso o projeto possui um interface que executa no terminal para testar as funcionalidades.
 
-Como meio de simplificar a comunicação entre os bancos, foi elaborado a solução com cada banco conhecendo os demais bancos e suas urls, sendo assim ao executar a imagem do docker passamos os endenreços de ip dos bancos. 
+Como meio de simplificar a comunicação entre os bancos, foi elaborado a solução com cada banco conhecendo os demais bancos e suas urls, sendo assim, ao executar a imagem do docker passamos os endenreços de ip dos bancos. 
 <a id="gerenciamento-de-contas"></a>
 
 ## 2.1. Gerenciamento de contas
