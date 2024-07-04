@@ -52,7 +52,7 @@ O processo de tranferência a feito através da utilização do algoritmo 2-Phas
   <img src="https://github.com/MateusAntony/Operacoes_bancarias_distribuidas/assets/68971638/15d6d803-7f0c-44fd-95cd-eca4f4950edf" alt="Descrição da Imagem">
 </p>
 <p align="center">
-  Imagem 3: Barema avaliativo
+  Imagem 1: Loop de contas que terão saldo reduzido para transferir, fase de preparo. 
 </p>
 
 Ademais, observando o comportamento da solução é evidenciado que o sistema cumpre o processo de trannsferencia para diferentes contas, sejam eleas do mesmo banco ou de bancos diferentes.
