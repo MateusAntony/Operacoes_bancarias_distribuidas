@@ -46,7 +46,7 @@ O sistema realiza transferência,deposito e pagamento de maneira correta, conten
 <a id="processo-de-transferência-entre-diferentes-contas"></a>
 ## 2.2. Processo de transferência entre diferentes contas
 
-O processo de tranferência a feito através da utilização do algoritmo 2-Phase Commit (2PC). Nesse sentido, inicialmente iremos preparar todas as contas que irão ter valores retirados, isso é feito analisando o tipo de banco que pertence a conta especificada, se for do próprio banco local solucionaremos chamando os métodos do algoritmo 2PC, contudo se for de bancos externo iremos comparar o nome do banco relacionado a conta ao listas de urls que tem no servidor do banco. Por fim, elaboramos o payload e fazemos a requisição para rota do banco que lida com cada fase do algoritmo 2PC. Logo abaixo está imagens de como funciona o loop de transferencia.
+O processo de tranferência a feito através da utilização do algoritmo 2-Phase Commit (2PC). Nesse sentido, inicialmente iremos preparar todas as contas que irão ter valores retirados, isso é feito analisando o tipo de banco que pertence a conta especificada, se for do próprio banco local solucionaremos chamando os métodos do algoritmo 2PC, contudo se for de bancos externo iremos comparar o nome do banco relacionado a conta ao listas de urls que tem no servidor do banco. Por fim, elaboramos o payload e fazemos a requisição para rota do banco que lida com cada fase do algoritmo 2PC. Logo abaixo estam imagens de como funciona o loop de transferencia.
 
 <p align="center">
   <img src="https://github.com/MateusAntony/Operacoes_bancarias_distribuidas/assets/68971638/15d6d803-7f0c-44fd-95cd-eca4f4950edf" alt="Descrição da Imagem">
@@ -55,7 +55,14 @@ O processo de tranferência a feito através da utilização do algoritmo 2-Phas
   Imagem 1: Loop de contas que terão saldo reduzido para transferir, fase de preparo. 
 </p>
 
-Ademais, observando o comportamento da solução é evidenciado que o sistema cumpre o processo de trannsferencia para diferentes contas, sejam eleas do mesmo banco ou de bancos diferentes.
+<p align="center">
+  <img src="https://github.com/MateusAntony/Operacoes_bancarias_distribuidas/assets/68971638/15d6d803-7f0c-44fd-95cd-eca4f4950edf" alt="Descrição da Imagem">
+</p>
+<p align="center">
+  Imagem 1: Saída após fazer um transferência do envolvendo banco a, banco b e banco c. 
+</p>
+
+Ademais, observando o comportamento da solução é evidenciado que o sistema cumpre o processo de transferencia para diferentes contas, sejam eleas do mesmo banco ou de bancos diferentes.
 
 <a id="Comunicação_entre_servidores"></a>
 ## Comunicação entre servidores
