@@ -197,8 +197,6 @@ def transferencia_mult():
                 numero_origem = conta['numero']
                 valor = float(conta['valor'])
 
-                logger.debug(f"Preparando retirada para conta: {conta}")
-
                 if nome_banco_origem == nome_banco:  # Mesma instituição
                     if banco.preparar(cpf_origem, numero_origem, valor):
                         transacoes_preparadas.append((cpf_origem, numero_origem, valor))
@@ -224,8 +222,7 @@ def transferencia_mult():
             # Confirmar retiradas
             for cpf_origem, numero_origem, valor in transacoes_preparadas:
                 nome_banco_origem = next((conta['nome_banco'] for conta in contas_origem if conta['cpf'] == cpf_origem and conta['numero'] == numero_origem), None)
-                logger.debug(f"Confirmando retirada para conta: {cpf_origem}, {numero_origem}")
-
+                print(nome_banco_origem)
                 if nome_banco_origem == nome_banco:
                     if not banco.confirmar(numero_origem, cpf_origem):
                         raise Exception("Falha ao confirmar retirada")

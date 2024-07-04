@@ -3,10 +3,6 @@ from contaPJ import ContaPJ
 from contaConjunta import ContaConjunta
 from threading import Lock 
 import time
-import logging
-
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
 class Banco:
     def __init__(self, nome):
@@ -97,7 +93,6 @@ class Banco:
             time.sleep(1)
             if self.retirada(cpf,numero,valor):
                 self.transacoes_preparadas[(cpf,numero)] = valor
-                logger.debug(f"Transação preparada: {(cpf, numero)} com valor {valor}")
                 return True
             return False
         finally:
@@ -105,8 +100,6 @@ class Banco:
     
     def confirmar(self,numero,cpf):
         self.lock_conta(numero)
-        logger.debug(f"Confirmando transação: {(cpf, numero)}")
-        logger.debug(f"Transações preparadas: {self.transacoes_preparadas}")
         try:
             if (cpf,numero) in self.transacoes_preparadas:
                 valor= self.transacoes_preparadas.pop((cpf,numero))    
