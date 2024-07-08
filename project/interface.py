@@ -71,7 +71,10 @@ def login():
     session = requests.Session()
     response = session.post(url, json=payload)
     print(response.json())
-    return session
+    if response.status_code == 200:    
+        return session
+    else:
+        return False
 
 def exibir_conta(session):
     url = f"{base_url}/exibir-conta"
@@ -307,7 +310,8 @@ def main():
             criar_conta_conjunta()
         elif escolha == '4':
             session = login()
-            sub_menu(session)
+            if session != False:
+                sub_menu(session)
         else:
             print("Opção inválida. Tente novamente.")
 

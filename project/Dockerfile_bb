@@ -6,6 +6,11 @@ WORKDIR /app
 
 # Copie o arquivo do Broker para o diretório de trabalho
 COPY banco_b.py .
+COPY banco.py .
+COPY contaBancaria.py .
+COPY contaConjunta.py .
+COPY contaFisica.py .
+COPY contaPJ.py .
 
 # Instale o Flask
 RUN pip install flask
