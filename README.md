@@ -52,8 +52,7 @@ O processo de tranferência a feito através da utilização do algoritmo 2-Phas
    <img src="https://github.com/MateusAntony/Operacoes_bancarias_distribuidas/assets/68971638/17be8930-e9d2-4421-9e9e-4132d1c946c0" alt="Descrição da Imagem">
 </p>
 <p align="center">
-
-  Imagem 2: Saída após fazer um transferência do envolvendo banco a, banco b e banco c. 
+  Imagem 1: Realizando transferencia envolvendo banco a, banco b e banco c. 
 </p>
 
 Ademais, observando o comportamento da solução é evidenciado que o sistema cumpre o processo de transferencia para diferentes contas, sejam eleas do mesmo banco ou de bancos diferentes.
