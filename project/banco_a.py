@@ -261,8 +261,7 @@ def transferencia_mult():
         except Exception as e:
             # Rollback em caso de erro
             logger.error(f"Erro na transferência: {str(e)}")
-            for cpf_origem, numero_origem, valor in transacoes_preparadas:
-                nome_banco_origem = next((conta['nome_banco'] for conta in contas_origem if conta['cpf'] == cpf_origem and conta['numero'] == numero_origem), None)
+            for nome_banco_origem,cpf_origem, numero_origem, valor in transacoes_preparadas:
                 if nome_banco_origem == nome_banco:
                     banco.rollback(cpf_origem, numero_origem)
                     logger.debug(f"Rollback realizado para conta local: {cpf_origem}, {numero_origem}")

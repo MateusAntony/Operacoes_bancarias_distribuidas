@@ -3,14 +3,13 @@ import os
 import socket
 import threading 
 
-port = int(os.getenv('portApi', 4321))
+port = int(os.getenv('portApi', 1234))
 endereco_ip = socket.gethostbyname(socket.gethostname())
 ip= os.getenv('ip', endereco_ip)
 
 
 base_url = f"http://{ip}:{port}"
 
-#Antes de rodar, verificar status
 
 def criar_conta_pf():
     numero = input("Número da conta: ")
@@ -72,7 +71,10 @@ def login():
     session = requests.Session()
     response = session.post(url, json=payload)
     print(response.json())
-    return session
+    if response.status_code == 200:    
+        return session
+    else:
+        return False
 
 def exibir_conta(session):
     url = f"{base_url}/exibir-conta"
@@ -160,6 +162,7 @@ def exibir_todas_contas():
 
 def sub_menu(session):
     while True:
+        on=status()
         print("1. Exibir conta logada")
         print("2. Exibir todas as contas")
         print("3. Transferência")
@@ -167,8 +170,12 @@ def sub_menu(session):
         print("5. Deposito")
         print("6. Transferencia concorrente")
         print("7. Voltar")
-
+        
         escolha = input("Escolha uma opção: ")
+        if escolha == '7':
+            break
+        if on == False:
+            escolha= '0'
         if escolha == '1':
             if session:
                 exibir_conta(session)
@@ -197,8 +204,7 @@ def sub_menu(session):
                 transferencia_concorrente(session)
             else:
                 print("Você precisa fazer login primeiro.")
-        elif escolha == '7':
-            break
+        
 
 def transferencia(session, cpf_origem, numero_origem, cpf_destino, numero_destino, valor, nome_banco_origem, nome_banco_destino):
     url = f"{base_url}/transferencia"
@@ -267,10 +273,23 @@ def transferencia_concorrente(session):
     for t in threads:
         t.join()
 
+def status():
+    try:
+        url = f"{base_url}/status"
+        response = requests.get(url)
+        if response.status_code == 200:
+            print("Banco online")
+            return True
+        else:
+            return False
+    except requests.exceptions.RequestException as e:
+        return False
+
 
 def main():
     session = None
     while True:
+        on=status()
         print("\n--- Menu ---")
         print("1. Criar conta PF")
         print("2. Criar conta PJ")
@@ -279,8 +298,11 @@ def main():
         print("5. Sair")
 
         escolha = input("Escolha uma opção: ")
-
-        if escolha == '1':
+        if escolha == '5':
+            break
+        if on == False:
+            escolha= '0'
+        elif escolha == '1':
             criar_conta_pf()
         elif escolha == '2':
             criar_conta_pj()
@@ -288,9 +310,8 @@ def main():
             criar_conta_conjunta()
         elif escolha == '4':
             session = login()
-            sub_menu(session)
-        elif escolha == '5':
-            break
+            if session != False:
+                sub_menu(session)
         else:
             print("Opção inválida. Tente novamente.")
 
