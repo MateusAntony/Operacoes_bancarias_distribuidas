@@ -68,6 +68,8 @@ Ademais, observando o comportamento da solução é evidenciado que o sistema cu
 <a id="Comunicação_entre_servidores"></a>
 ## Comunicação entre servidores
 
+O sistema utiliza do protocolo HTTP para comunicação entre os bancos
+
 <a id="Sincronização_em_um_único_servidor"></a>
 ## Sincronização em um único servidor
 
