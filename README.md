@@ -49,7 +49,8 @@ O sistema realiza transferência,deposito e pagamento de maneira correta, conten
 O processo de tranferência a feito através da utilização do algoritmo 2-Phase Commit (2PC). Nesse sentido, inicialmente iremos preparar todas as contas que irão ter valores retirados, isso é feito analisando o tipo de banco que pertence a conta especificada, se for do próprio banco local solucionaremos chamando os métodos do algoritmo 2PC, contudo se for de bancos externos iremos comparar o nome do banco com lista de bancos disponiveis para recuperar url específica. Por fim, elaboramos o payload e fazemos a requisição para rota do banco que lida com a fase do preparo. Isso é repetido na fase confirmação para finalizar as retiradas dos valores. Logo abaixo está uma imagem que mostra um pedido de transferência envolvendo três bancos diferentes.
 
 <p align="center">
-  <img src="https://github.com/MateusAntony/Operacoes_bancarias_distribuidas/raw/main/assets/68971638/f542ffb3-3ea6-4e9e-96f0-c0a0776522a8.png" alt="Descrição da Imagem">
+  <img src="![image](https://github.com/MateusAntony/Operacoes_bancarias_distribuidas/assets/68971638/b5045976-0913-49fc-b4ee-442923f268b9)
+" alt="Descrição da Imagem">
 </p>
 <p align="center">
   Imagem 2: Saída após fazer um transferência do envolvendo banco a, banco b e banco c. 
