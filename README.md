@@ -109,7 +109,7 @@ Ao analisar a solução desenvolvida, observa-se que grande parte dos requisitos
 
 <a id="Como_Usar"></a>
 ## Como Usar
-1. Execute os arquivos do banco_a, banco_b e banco_c, passando os ip's para de cada banco externo, como mostrado no exemplo abaixo que é executado o banco_a:
-
-`Docker run --network=host -it -e ipb=ip_banco_b ipc=ip_banco_c nome_da_imagem`
+1. Execute os arquivos do banco_a, banco_b e banco_c, passando os ip's para de cada banco externo, como mostrado nesse exemplo que é executado o banco_a:`Docker run --network=host -it -e ipb=ip_banco_b ipc=ip_banco_c nome_da_imagem`
+2. Execute a interface passando o ip e a porta do banco que vai ter a interface iniciada, como no exemplo:`Docker run --network=host -it -e portApi=porta ip=ip_banco nome_da_imagem`
+3. Por fim você terá acesso a o menu e os serviços fornecido pelo banco.
 
