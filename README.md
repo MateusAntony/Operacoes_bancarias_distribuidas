@@ -59,7 +59,7 @@ O processo de tranferência a feito através da utilização do algoritmo 2-Phas
    <img src="https://github.com/MateusAntony/Operacoes_bancarias_distribuidas/assets/68971638/196834f4-62da-40a5-9ac2-f0dcfd73de56" alt="Descrição da Imagem">
 </p>
 <p align="center">
-  Imagem 1: Analisando se os valores foram retirados realmente 
+  Imagem 1: Analisando se os valores foram retirados corretamente
 </p>
 
 
@@ -68,13 +68,19 @@ Ademais, observando o comportamento da solução é evidenciado que o sistema cu
 <a id="Comunicação_entre_servidores"></a>
 ## Comunicação entre servidores
 
-O sistema utiliza do protocolo HTTP para comunicação entre os bancos
+O sistema utiliza do protocolo HTTP para comunicação entre os bancos.
 
 <a id="Sincronização_em_um_único_servidor"></a>
 ## Sincronização em um único servidor
 
+A concorrência em um único servidor é tratada com o uso de locks. Cada conta tem seu próprio lock, garantindo que apenas uma transação por vez possa modificar o saldo da conta. Dessa forma, se duas transações envolvendo contas diferentes chegarem ao servidor no mesmo instante, ambas serão realizadas simultaneamente. No entanto, se duas transações envolverem a mesma conta, uma delas será bloqueada até que a outra seja concluída sendo necessário solicitar novamente a transação que foi bloqueada.
+
 <a id="Algoritmo_de_concorrencia_distribuída"></a>
 ## Algoritmo de concorrencia distribuída
+
+Foi implementado o algoritmo Two-Phase Commit (2PC) onde garante a consistência de dados em sistemas distribuidos, além de garantir atomicidade. Consiste em trê processos, o primeiro é o de preparo, onde há o bloqueio da conta e verifica se a saldo suficiente para realizar a transferência, se houver saldo suficiente, a transação é registrada na lista de transações prepadas.
+
+No segundo estágio, conhecido como confirmação, a conta é bloqueada e verifica se a conta especificada está na lista de transações preparadas, ao encontra, ela é removida da lista e declarada como confirmada. Já no ultimo procesos, o rollback vai desfazer as alterções temporárias se algum erro acontecer durante a transação, ou se alguma das contas não puder realizar a transação.
 
 <a id="Confiabilidade"></a>
 ## Confiabilidade
