@@ -109,3 +109,5 @@ Ao analisar a solução desenvolvida, observa-se que grande parte dos requisitos
 
 <a id="Como_Usar"></a>
 ## Como Usar
+1. `print("Olá, Mundo!")`
+
