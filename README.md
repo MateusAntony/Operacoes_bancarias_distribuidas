@@ -79,9 +79,9 @@ A concorrência em um único servidor é tratada com o uso de locks. Cada conta 
 
 Foi implementado o algoritmo Two-Phase Commit (2PC), que garante a consistência de dados em sistemas distribuídos, além de garantir atomicidade. Consiste em três processos: 
 
--Preparação: Bloqueio da conta e verificação se há saldo suficiente para realizar a transferência. Se houver saldo suficiente, a transação é registrada na lista de transações preparadas.
--Confirmação: Bloqueio da conta e verificação se a conta especificada está na lista de transações preparadas. Ao encontrar, ela é removida da lista e declarada como confirmada.
--Rollback: Desfaz as alterações temporárias se algum erro acontecer durante a transação, ou se alguma das contas não puder realizar a transação.
+- Preparação: Bloqueio da conta e verificação se há saldo suficiente para realizar a transferência. Se houver saldo suficiente, a transação é registrada na lista de transações preparadas.
+- Confirmação: Bloqueio da conta e verificação se a conta especificada está na lista de transações preparadas. Ao encontrar, ela é removida da lista e declarada como confirmada.
+- Rollback: Desfaz as alterações temporárias se algum erro acontecer durante a transação, ou se alguma das contas não puder realizar a transação.
 
 <a id="Confiabilidade"></a>
 ## Confiabilidade
