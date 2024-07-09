@@ -75,7 +75,7 @@ O sistema utiliza do protocolo HTTP para comunicação entre os bancos.
 
 A concorrência em um único servidor é tratada com o uso de locks. Cada conta tem seu próprio lock, garantindo que apenas uma transação por vez possa modificar o saldo da conta. Dessa forma, se duas transações envolvendo contas diferentes chegarem ao servidor no mesmo instante, ambas serão realizadas simultaneamente. No entanto, se duas transações envolverem a mesma conta, uma delas será bloqueada até que a outra seja concluída sendo necessário solicitar novamente a transação que foi bloqueada.
 
-<a id="Algoritmo_de_concorrencia_distribuída"></a>
+<a id="algoritmo-de-concorrência-distribuída"></a>
 ## Algoritmo de concorrencia distribuída
 
 Foi implementado o algoritmo Two-Phase Commit (2PC) onde garante a consistência de dados em sistemas distribuidos, além de garantir atomicidade. Consiste em trê processos, o primeiro é o de preparo, onde há o bloqueio da conta e verifica se a saldo suficiente para realizar a transferência, se houver saldo suficiente, a transação é registrada na lista de transações prepadas.
