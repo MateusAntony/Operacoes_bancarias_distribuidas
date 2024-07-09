@@ -87,6 +87,14 @@ No segundo estágio, conhecido como confirmação, a conta é bloqueada e verifi
 
 O sistema verifica o status dos bancos envolvidos na transação, se um deles é desconectado a transação não é realizada. Ademais, se o banco que o usuário estiver conectado for desconectado, ele não vai conseguir executar nenhuma funcionalidade até ele retornar, quando é retornado o funcionamento do sistema age normalmente.
 
+<p align="center">
+   <img src="https://github.com/MateusAntony/Operacoes_bancarias_distribuidas/assets/68971638/f59858f6-9a4c-4f0d-8f89-03d4e5584cbf" alt="Descrição da Imagem">
+</p>
+<p align="center">
+  Imagem 1: Realizando transferencia envolvendo banco a, banco b e banco c. 
+</p>
+
+
 <a id="Conclusão"></a>
 ## Conclusão
 
