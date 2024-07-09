@@ -21,32 +21,31 @@
 
 <a id="introducao"></a>
 ## 1. Introdução
-Atualmente, grande parte dos clientes de bancos tem adotado a utilização de transações financeiras por dispositivos móveis. O pix, por exemplo, simplifica todo o processo de movimentação financeira, além de proporcionar a inclusão de brasileiro sem cartão de creditos.
+Atualmente, grande parte dos clientes de bancos tem adotado a utilização de transações financeiras por dispositivos móveis. O Pix, por exemplo, simplifica todo o processo de movimentação financeira, além de proporcionar a inclusão de brasileiros sem cartão de crédito.
 
-Nesse sentido, um governo de um país específico, no qual não possui banco central, busca desenvolver um sistema que se assemelha ao pix, possibilitando as operações de tranferências, pagamentos e deposito,além depossibilitar a criação de contas bancárias. Assim, já que não possui um banco central, não deve utilizar recursos centralizados para o controle das transações.
+Nesse sentido, um governo de um país específico, que não possui banco central, busca desenvolver um sistema semelhante ao Pix, permitindo operações de transferências, pagamentos e depósitos, além de possibilitar a criação de contas bancárias. Assim, como não possui um banco central, não deve utilizar recursos centralizados para o controle das transações.
 
-Sendo assim, esse consórcio bancário deve ser capaz de realizar transferências atômicas envolvendo contas de outros bancos, evitando problemas com os dinheiros das contas.
+Sendo assim, esse consórcio bancário deve ser capaz de realizar transferências atômicas envolvendo contas de outros bancos, evitando problemas com os saldos das contas.
  
 <a id="desenvolvimento"></a>
 ## 2. Desenvolvimento
+No desenvolvimento da solução foi utilizado o framework Flask para a criação da API Restful. Além disso, foi utilizado o protocolo HTTP para comunicação entre os servidores dos bancos.
 
-No desenvolvimento da solução foi utilizado o framework Flask para a crição da ApiRestful, junto com isso foi utilizado para comunicação entre os servidores dos bancos o protocolo HTTP.
+Foi elaborada uma API para cada banco durante o desenvolvimento do projeto. Foi analisada uma maneira melhor de simplificar a codificação e a utilização do Docker, por isso foram criados três arquivos de banco semelhantes com o intuito de simplificar os testes. Além disso, o projeto possui uma interface que executa no terminal para testar as funcionalidades.
 
-Foi elaborado uma Api para cada banco durante o desenvovimento do projeto, foi analisado uma maneira melhor de simplificar a codificação e a utilização do docker, por isso foi criado três arquivos de banco semelhantes com intuito de simplificar no momento de teste. Além disso o projeto possui um interface que executa no terminal para testar as funcionalidades.
-
-Como meio de simplificar a comunicação entre os bancos, foi elaborado a solução com cada banco conhecendo os demais bancos e suas urls, sendo assim, ao executar a imagem do docker passamos os endenreços de ip dos bancos. 
+Como meio de simplificar a comunicação entre os bancos, a solução foi elaborada com cada banco conhecendo os demais bancos e suas URLs. Dessa forma, ao executar a imagem do Docker, passamos os endereços de IP dos bancos.
 
 <a id="gerenciamento-de-contas"></a>
 ## 2.1. Gerenciamento de contas
 
-O sistema permite a criação de contas físicas, contas jurídicas e contas conjuntas. Vale ressaltar que só há possibilidade de criar uma conta por CPF cadastrado, exceto conta conjunta, ou seja, se você já tiver cadastrado uma conta com um determinado CPF e quiser criar outra com o mesmo CPF, só será possível criar uma conta conjunta.
+O sistema permite a criação de contas físicas, contas jurídicas e contas conjuntas. Vale ressaltar que só há possibilidade de criar uma conta por CPF cadastrado, exceto contas conjuntas. Ou seja, se você já tiver cadastrado uma conta com um determinado CPF e quiser criar outra com o mesmo CPF, só será possível criar uma conta conjunta.
 
-O sistema realiza transferência,deposito e pagamento de maneira correta, contendo a possibilidade de transferir para contas do mesmo banco e para contas de diferentes bancos. As transações são preparadas, confirmadas e em caso de erro são revertidas. Vale mencionar que as transações de pagamento e deposito são consideradas uma transferencias,  nesse sentido foi utilizado o mesmo endpoint para lidar com essas transações.
+O sistema realiza transferências, depósitos e pagamentos de maneira correta, incluindo a possibilidade de transferir para contas do mesmo banco e para contas de diferentes bancos. As transações são preparadas, confirmadas e, em caso de erro, são revertidas. Vale mencionar que as transações de pagamento e depósito são consideradas transferências, sendo utilizado o mesmo endpoint para lidar com essas transações.
 
 <a id="processo-de-transferência-entre-diferentes-contas"></a>
 ## 2.2. Processo de transferência entre diferentes contas
 
-O processo de tranferência a feito através da utilização do algoritmo 2-Phase Commit (2PC). Nesse sentido, inicialmente iremos preparar todas as contas que irão ter valores retirados, isso é feito analisando o tipo de banco que pertence a conta especificada, se for do próprio banco local solucionaremos chamando os métodos do algoritmo 2PC, contudo se for de bancos externos iremos comparar o nome do banco com lista de bancos disponiveis para recuperar url específica. Por fim, elaboramos o payload e fazemos a requisição para rota do banco que lida com a fase do preparo. Isso é repetido na fase confirmação para finalizar as retiradas dos valores. Logo abaixo está uma imagem que mostra um pedido de transferência envolvendo três bancos diferentes.
+O processo de transferência é realizado através da utilização do algoritmo Two-Phase Commit (2PC). Inicialmente, todas as contas que terão valores retirados são preparadas. Isso é feito analisando o tipo de banco ao qual a conta pertence. Se for do próprio banco local, as operações são tratadas diretamente. Se forem de bancos externos, são comparados os nomes dos bancos com uma lista de bancos disponíveis para recuperar a URL específica. Em seguida, é elaborado o payload e feita a requisição para a rota do banco que lida com a fase de preparo. Este processo é repetido na fase de confirmação para finalizar as retiradas dos valores.
 
 <p align="center">
    <img src="https://github.com/MateusAntony/Operacoes_bancarias_distribuidas/assets/68971638/17be8930-e9d2-4421-9e9e-4132d1c946c0" alt="Descrição da Imagem">
@@ -63,7 +62,7 @@ O processo de tranferência a feito através da utilização do algoritmo 2-Phas
 </p>
 
 
-Ademais, observando o comportamento da solução é evidenciado que o sistema cumpre o processo de transferencia para diferentes contas, sejam eleas do mesmo banco ou de bancos diferentes.
+Ademais, observando o comportamento da solução, é evidenciado que o sistema cumpre o processo de transferência para diferentes contas, sejam elas do mesmo banco ou de bancos diferentes.
 
 <a id="Comunicação_entre_servidores"></a>
 ## Comunicação entre servidores
@@ -73,19 +72,21 @@ O sistema utiliza do protocolo HTTP para comunicação entre os bancos.
 <a id="Sincronização_em_um_único_servidor"></a>
 ## Sincronização em um único servidor
 
-A concorrência em um único servidor é tratada com o uso de locks. Cada conta tem seu próprio lock, garantindo que apenas uma transação por vez possa modificar o saldo da conta. Dessa forma, se duas transações envolvendo contas diferentes chegarem ao servidor no mesmo instante, ambas serão realizadas simultaneamente. No entanto, se duas transações envolverem a mesma conta, uma delas será bloqueada até que a outra seja concluída sendo necessário solicitar novamente a transação que foi bloqueada.
+A concorrência em um único servidor é tratada com o uso de locks. Cada conta tem seu próprio lock, garantindo que apenas uma transação por vez possa modificar o saldo da conta. Dessa forma, se duas transações envolvendo contas diferentes chegarem ao servidor ao mesmo tempo, ambas serão realizadas simultaneamente. No entanto, se duas transações envolverem a mesma conta, uma delas será bloqueada até que a outra seja concluída.
 
 <a id="algoritmo-de-concorrência-distribuída"></a>
 ## Algoritmo de concorrencia distribuída
 
-Foi implementado o algoritmo Two-Phase Commit (2PC) onde garante a consistência de dados em sistemas distribuidos, além de garantir atomicidade. Consiste em trê processos, o primeiro é o de preparo, onde há o bloqueio da conta e verifica se a saldo suficiente para realizar a transferência, se houver saldo suficiente, a transação é registrada na lista de transações prepadas.
+Foi implementado o algoritmo Two-Phase Commit (2PC), que garante a consistência de dados em sistemas distribuídos, além de garantir atomicidade. Consiste em três processos: 
 
-No segundo estágio, conhecido como confirmação, a conta é bloqueada e verifica se a conta especificada está na lista de transações preparadas, ao encontra, ela é removida da lista e declarada como confirmada. Já no ultimo procesos, o rollback vai desfazer as alterções temporárias se algum erro acontecer durante a transação, ou se alguma das contas não puder realizar a transação.
+-Preparação: Bloqueio da conta e verificação se há saldo suficiente para realizar a transferência. Se houver saldo suficiente, a transação é registrada na lista de transações preparadas.
+-Confirmação: Bloqueio da conta e verificação se a conta especificada está na lista de transações preparadas. Ao encontrar, ela é removida da lista e declarada como confirmada.
+-Rollback: Desfaz as alterações temporárias se algum erro acontecer durante a transação, ou se alguma das contas não puder realizar a transação.
 
 <a id="Confiabilidade"></a>
 ## Confiabilidade
 
-O sistema verifica o status dos bancos envolvidos na transação, se um deles é desconectado a transação não é realizada. Ademais, se o banco que o usuário estiver conectado for desconectado, ele não vai conseguir executar nenhuma funcionalidade até ele retornar, quando é retornado o funcionamento do sistema age normalmente.
+OO sistema verifica o status dos bancos envolvidos na transação. Se um deles estiver desconectado, a transação não é realizada. Além disso, se o banco ao qual o usuário estiver conectado for desconectado, ele não conseguirá executar nenhuma funcionalidade até que retorne ao funcionamento normal.
 
 <p align="center">
    <img src="https://github.com/MateusAntony/Operacoes_bancarias_distribuidas/assets/68971638/f59858f6-9a4c-4f0d-8f89-03d4e5584cbf" alt="Descrição da Imagem">
@@ -104,7 +105,7 @@ O sistema verifica o status dos bancos envolvidos na transação, se um deles é
 <a id="Conclusão"></a>
 ## Conclusão
 
-Ao analisar a solução desenvolvida foi observado que grande parte dos requisitos foram cumpridos, onde um sistema de bancos distribuidos funciona de maneira concorrente, com a utilização de containers docker para conclusão do sistema. 
+Ao analisar a solução desenvolvida, observa-se que grande parte dos requisitos foi cumprida. Um sistema de bancos distribuídos funciona de maneira concorrente, utilizando containers Docker para conclusão do sistema.
 
 <a id="Como_Usar"></a>
 ## Como Usar
