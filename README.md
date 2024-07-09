@@ -85,8 +85,12 @@ No segundo estágio, conhecido como confirmação, a conta é bloqueada e verifi
 <a id="Confiabilidade"></a>
 ## Confiabilidade
 
+O sistema verifica o status dos bancos envolvidos na transação, se um deles é desconectado a transação não é realizada. Ademais, se o banco que o usuário estiver conectado for desconectado, ele não vai conseguir executar nenhuma funcionalidade até ele retornar, quando é retornado o funcionamento do sistema age normalmente.
+
 <a id="Conclusão"></a>
 ## Conclusão
+
+Ao analisar a solução desenvolvida foi observado que grande parte dos requisitos foram cumpridos, onde um sistema de bancos distribuidos funciona de maneira concorrente, com a utilização de containers docker para conclusão do sistema. 
 
 <a id="Como_Usar"></a>
 ## Como Usar
