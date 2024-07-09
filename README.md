@@ -109,5 +109,7 @@ Ao analisar a solução desenvolvida, observa-se que grande parte dos requisitos
 
 <a id="Como_Usar"></a>
 ## Como Usar
-1. `print("Olá, Mundo!")`
+1. Execute os arquivos do banco_a, banco_b e banco_c, passando os ip's para de cada banco externo, como mostrado no exemplo abaixo que é executado o banco_a:
+
+`Docker run --network=host -it -e ipb=ip_banco_b ipc=ip_banco_c nome_da_imagem`
 
