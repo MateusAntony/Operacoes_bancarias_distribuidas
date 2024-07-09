@@ -116,5 +116,13 @@ Ao analisar a solução desenvolvida, observa-se que grande parte dos requisitos
    
    `Docker run --network=host -it -e portApi=porta ip=ip_banco nome_da_imagem`
 3. Por fim você terá acesso a o menu e os serviços fornecido pelo banco.
-   
+
+<p align="center">
+   <img src="https://github.com/MateusAntony/Operacoes_bancarias_distribuidas/assets/68971638/78c1ab0d-0b18-4614-b6ba-ab1636cc2a12" alt="Descrição da Imagem">
+</p>
+<p align="center">
+  Imagem 5: Menu principal.
+</p>
+
+
 
