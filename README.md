@@ -91,9 +91,15 @@ O sistema verifica o status dos bancos envolvidos na transação, se um deles é
    <img src="https://github.com/MateusAntony/Operacoes_bancarias_distribuidas/assets/68971638/f59858f6-9a4c-4f0d-8f89-03d4e5584cbf" alt="Descrição da Imagem">
 </p>
 <p align="center">
-  Imagem 1: Realizando transferencia envolvendo banco a, banco b e banco c. 
+  Imagem 3: Verificação do status dos bancos envolvidos na transferência.
 </p>
 
+<p align="center">
+   <img src="https://github.com/MateusAntony/Operacoes_bancarias_distribuidas/assets/68971638/258f2976-76b4-4bd6-bef9-72e1b29acefd" alt="Descrição da Imagem">
+</p>
+<p align="center">
+  Imagem 4: Função de verificação do status.
+</p>
 
 <a id="Conclusão"></a>
 ## Conclusão
